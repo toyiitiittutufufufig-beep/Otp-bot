@@ -11,6 +11,7 @@ from datetime import datetime
 
 import telebot
 from telebot import types
+from typing import Optional
 
 from config import config
 from models import db, User, Combo, OTPLog, ForceSubChannel, get_setting
@@ -119,7 +120,7 @@ def force_sub_check(user_id: int) -> bool:
     return True
 
 
-def force_sub_markup() -> types.InlineKeyboardMarkup | None:
+def force_sub_markup() -> Optional[types.InlineKeyboardMarkup]:
     channels = get_active_channels()
     if not channels:
         return None
