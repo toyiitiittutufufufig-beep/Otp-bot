@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>24XRAVEN SMS Bot - Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+</head>
+<body>
+    <div class="container-fluid py-4">
+
+        <!-- ═══════════════════════════════════════════════════ -->
+        <!-- Header -->
+        <!-- ═══════════════════════════════════════════════════ -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="header-card">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                        <div>
+                            <h1 class="h3 mb-1">
+                                <i class="fas fa-robot text-primary"></i>
+                                24XRAVEN SMS Bot
+                            </h1>
+                            <p class="text-muted mb-0 small">لوحة تحكم مراقبة OTPs من iVasms</p>
+                        </div>
+                        <div class="text-end">
+                            <div class="status-badge" id="globalStatus">
+                                <span class="status-dot offline"></span>
+                                <span>جاري التحميل...</span>
+                            </div>
+                            <div class="text-muted small mt-1">
+                                آخر تحديث: <span id="lastUpdated">--</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══════════════════════════════════════════════════ -->
+        <!-- Alert Area -->
+        <!-- ═══════════════════════════════════════════════════ -->
+        <div id="alertArea"></div>
+
+        <!-- ═══════════════════════════════════════════════════ -->
+        <!-- Status Cards -->
+        <!-- ═══════════════════════════════════════════════════ -->
+        <div class="row g-3 mb-4">
+            <div class="col-md-3 col-sm-6">
+                <div class="stat-card">
+                    <div class="stat-icon bg-primary-soft">
+                        <i class="fas fa-circle-play"></i>
+                    </div>
+                    <div class="stat-body">
+                        <div class="stat-label">حالة المراقبة</div>
+                        <div class="stat-value" id="monitorStatus">
+                            <span class="badge bg-secondary">--</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 col-sm-6">
+                <div class="stat-card">
+                    <div class="stat-icon bg-success-soft">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <div class="stat-body">
+                        <div class="stat-label">مدة التشغيل</div>
+                        <div class="stat-value" id="uptime">--</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 col-sm-6">
+                <div class="stat-card">
+                    <div class="stat-icon bg-warning-soft">
+                        <i class="fas fa-paper-plane"></i>
+                    </div>
+                    <div class="stat-body">
+                        <div class="stat-label">OTPs مرسلة</div>
+                        <div class="stat-value" id="otpsSent">0</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 col-sm-6">
+                <div class="stat-card">
+                    <div class="stat-icon bg-info-soft">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="stat-body">
+                        <div class="stat-label">المستخدمين</div>
+                        <div class="stat-value" id="totalUsers">0</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══════════════════════════════════════════════════ -->
+        <!-- Controls -->
+        <!-- ═══════════════════════════════════════════════════ -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="panel">
+                    <div class="panel-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-cogs"></i>
+                            التحكم في البوت
+                        </h5>
+                    </div>
+                    <div class="panel-body">
+                        <div class="d-flex flex-wrap gap-2">
+                            <button class="btn btn-primary" onclick="startMonitor()">
+                                <i class="fas fa-play"></i> بدء المراقبة
+                            </button>
+                            <button class="btn btn-danger" onclick="stopMonitor()">
+                                <i class="fas fa-stop"></i> إيقاف المراقبة
+                            </button>
+                            <button class="btn btn-info" onclick="checkNow()">
+                                <i class="fas fa-search"></i> فحص فوري
+                            </button>
+                            <button class="btn btn-warning" onclick="toggleMaintenance()">
+                                <i class="fas fa-wrench"></i> <span id="maintenanceLabel">وضع الصيانة</span>
+                            </button>
+                            <button class="btn btn-secondary" onclick="refreshAll()">
+                                <i class="fas fa-refresh"></i> تحديث
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══════════════════════════════════════════════════ -->
+        <!-- Stats Row -->
+        <!-- ═══════════════════════════════════════════════════ -->
+        <div class="row g-3 mb-4">
+            <div class="col-md-6">
+                <div class="panel h-100">
+                    <div class="panel-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-chart-line"></i>
+                            إحصائيات المراقبة
+                        </h5>
+                    </div>
+                    <div class="panel-body">
+                        <div class="row g-3">
+                            <div class="col-6 col-md-4">
+                                <div class="mini-stat">
+                                    <div class="mini-label">تم جلبها</div>
+                                    <div class="mini-value" id="totalFetched">0</div>
+                                </div>
+                            </div>
+                            <div class="col-6 col-md-4">
+                                <div class="mini-stat">
+                                    <div class="mini-label">للمستخدمين</div>
+                                    <div class="mini-value text-success" id="sentUser">0</div>
+                                </div>
+                            </div>
+                            <div class="col-6 col-md-4">
+                                <div class="mini-stat">
+                                    <div class="mini-label">للجروبات</div>
+                                    <div class="mini-value text-info" id="sentGroup">0</div>
+                                </div>
+                            </div>
+                            <div class="col-6 col-md-4">
+                                <div class="mini-stat">
+                                    <div class="mini-label">مكررة</div>
+                                    <div class="mini-value text-warning" id="duplicates">0</div>
+                                </div>
+                            </div>
+                            <div class="col-6 col-md-4">
+                                <div class="mini-stat">
+                                    <div class="mini-label">أخطاء</div>
+                                    <div class="mini-value text-danger" id="errors">0</div>
+                                </div>
+                            </div>
+                            <div class="col-6 col-md-4">
+                                <div class="mini-stat">
+                                    <div class="mini-label">آخر فحص</div>
+                                    <div class="mini-value small" id="lastCheck">--</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="panel h-100">
+                    <div class="panel-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-database"></i>
+                            إحصائيات الداتابيز
+                        </h5>
+                    </div>
+                    <div class="panel-body">
+                        <div class="row g-3">
+                            <div class="col-6 col-md-4">
+                                <div class="mini-stat">
+                                    <div class="mini-label">إجمالي OTPs</div>
+                                    <div class="mini-value text-info" id="dbOtps">0</div>
+                                </div>
+                            </div>
+                            <div class="col-6 col-md-4">
+                                <div class="mini-stat">
+                                    <div class="mini-label">الكومبوهات</div>
+                                    <div class="mini-value" id="dbCombos">0</div>
+                                </div>
+                            </div>
+                            <div class="col-6 col-md-4">
+                                <div class="mini-stat">
+                                    <div class="mini-label">المحظورين</div>
+                                    <div class="mini-value text-danger" id="dbBanned">0</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══════════════════════════════════════════════════ -->
+        <!-- OTP Logs Table -->
+        <!-- ═══════════════════════════════════════════════════ -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="panel">
+                    <div class="panel-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="fas fa-key"></i>
+                            آخر OTPs
+                        </h5>
+                        <button class="btn btn-sm btn-outline-secondary" onclick="loadLogs()">
+                            <i class="fas fa-refresh"></i> تحديث
+                        </button>
+                    </div>
+                    <div class="panel-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        <th>الكود</th>
+                                        <th>الخدمة</th>
+                                        <th>الرقم</th>
+                                        <th>المستخدم</th>
+                                        <th>الحالة</th>
+                                        <th>الوقت</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="logsTable">
+                                    <tr>
+                                        <td colspan="7" class="text-center text-muted py-4">
+                                            جاري التحميل...
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══════════════════════════════════════════════════ -->
+        <!-- Footer -->
+        <!-- ═══════════════════════════════════════════════════ -->
+        <div class="row">
+            <div class="col-12 text-center text-muted small py-3">
+                24XRAVEN SMS Bot &copy; 2026
+                <span class="mx-2">•</span>
+                Powered by Flask + pyTelegramBotAPI
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+</body>
+</html>
